@@ -10,18 +10,10 @@ from lumopt.utilities.materials import Material
 from lumopt.figures_of_merit.modematch import ModeMatch
 from lumopt.optimizers.generic_optimizers import ScipyOptimizers
 from lumopt.optimization import Optimization
-from lumapi import LumApiError
+
+
 # Load Base simulation functions
-from polsplitter_3DFDTD_geometry import y_branch_init_inTE, y_branch_init_inTM
-
-
-class C: #Usefull class for colored output text in the console
-    RED = '\033[31m'
-    ENDC = '\033[m'
-    GREEN = '\033[32m'
-    YELLOW = '\033[33m'
-    BLUE = '\033[34m'
-
+from polsplitter_varFDTD_geometry import y_branch_init_inTE, y_branch_init_inTM
 
 PolSplitter_TE = y_branch_init_inTE
 PolSplitter_TM = y_branch_init_inTM
@@ -53,7 +45,7 @@ def plot_spliter(params):
     pp.show()
 
 def splitter(params):
-    # Both top and bottom y coordinates are provided as inputs, where the second half of the inout data is used for the
+    # Both top and bottom y cooridinates are provided as inputs, where the second half of the inout data is used for the
     # bottom boundary of the polygon. The coordinates for the bottom boundary need to be flipped vertically.
     # This is necessary to make sure that bounds are positive
     np.savetxt('./last_param.txt', params)
@@ -162,7 +154,7 @@ polygon = FunctionDefinedPolygon(func=splitter,
 
 # Define figure of merit
 fom1 = ModeMatch(monitor_name='fom',
-                 mode_number='fundamental mode',    # TE mode in for vertical symmetric condition
+                 mode_number='fundamental sim',    # TE sim in phase
                  direction='Forward',
                  target_T_fwd=lambda wl: np.ones(wl.size),
                  norm_p=1)
@@ -170,8 +162,8 @@ fom1 = ModeMatch(monitor_name='fom',
 optimizer_1 = ScipyOptimizers(max_iter=30,
                               method='L-BFGS-B',
                               # scaling_factor = scaling_factor,
-                              pgtol=1.0e-5,
-                              ftol=1.0e-5,
+                              pgtol=1.0e-4,
+                              ftol=1.0e-4,
                               # target_fom = 0.0,
                               scale_initial_gradient_to=0.0)
 
@@ -180,15 +172,15 @@ opt1 = Optimization(base_script=PolSplitter_TE,
                     fom=fom1,
                     geometry=polygon,
                     optimizer=optimizer_1,
-                    use_var_fdtd=False,
+                    use_var_fdtd=True,
                     hide_fdtd_cad=False,
                     use_deps=True,
                     plot_history=True,
                     store_all_simulations=False)
-
+                   
 
 fom2 = ModeMatch(monitor_name='fom',
-                 mode_number='fundamental mode',    # TM mode in for vertical asymmetric condition
+                 mode_number='fundamental sim',    #
                  direction='Forward',
                  target_T_fwd=lambda wl: np.ones(wl.size),
                  norm_p=1)
@@ -196,8 +188,8 @@ fom2 = ModeMatch(monitor_name='fom',
 optimizer_2 = ScipyOptimizers(max_iter=30,
                               method='L-BFGS-B',
                               # scaling_factor = scaling_factor,
-                              pgtol=1.0e-5,
-                              ftol=1.0e-5,
+                              pgtol=1.0e-4,
+                              ftol=1.0e-4,
                               # target_fom = 0.0,
                               scale_initial_gradient_to=0.0)
 
@@ -206,7 +198,7 @@ opt2 = Optimization(base_script=PolSplitter_TM,
                     fom=fom2,
                     geometry=polygon,
                     optimizer=optimizer_2,
-                    use_var_fdtd=False,
+                    use_var_fdtd=True,
                     hide_fdtd_cad=False,
                     use_deps=True,
                     plot_history=True,
@@ -216,39 +208,20 @@ opt = opt1 + opt2
 results = opt.run()
 print(results)
 
-# #Save parameters to file
+# Save parameters to file
 np.savetxt('../2D_parameters.txt', results[1])
 
-# #Export generated structure
-gds_export_script = str("")
+# Export generated structure
+#gds_export_script = str("")
 
-
-
-with lumapi.FDTD(hide=False) as sim:
-    try:
-        print('Mode is FDTD = ', isinstance(sim, lumapi.FDTD))
-        sim.cd(project_directory)
-        y_branch_init_inTM(sim)
-        sim.addpoly(vertices=splitter(prev_results))
-        sim.set('x', 0.0)
-        sim.set('y', 0.0)
-        sim.set('z', 0.0)
-        sim.set('z span', depth)
-        sim.set('material', 'Si (Silicon) - Palik')
-
-        # Run Export Script
-
-        input('Press Enter to escape...')
-    except LumApiError as err:
-        print(C.YELLOW +f"LumAPI Exception {err=}, {type(err)=}" + C.ENDC)
-        sim.close()
-        raise
-    except BaseException as err:
-        print(C.YELLOW +f"Unexpected {err=}, {type(err)=}"+ C.ENDC)
-        sim.close()
-        raise
-
-
-
-#
+# with lumapi.MODE(hide=False) as sim:
+#     sim.cd(project_directory)
+#     y_branch_init_inTE(sim)
+#     sim.addpoly(vertices=splitter(results[1]))
+#     sim.set('x', 0.0)
+#     sim.set('y', 0.0)
+#     sim.set('z', 0.0)
+#     sim.set('z span', depth)
+#     sim.set('material', 'Si (Silicon) - Palik')
+#     sim.save("y_branch_2D_FINAL")
 #     # sim.eval(gds_export_script)

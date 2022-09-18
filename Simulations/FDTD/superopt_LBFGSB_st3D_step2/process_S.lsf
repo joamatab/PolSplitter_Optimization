@@ -1,0 +1,70 @@
+#Get expansion monitors
+load('TE_HR.fsp');
+S12 = getresult("FDTD::ports::port 2","S");
+S13 = getresult("FDTD::ports::port 3","S");
+
+TE_TE0_12 = abs(S12.S(:,1))^2;
+TE_TM0_12 = abs(S12.S(:,2))^2;
+TE_TE0_13 = abs(S13.S(:,1))^2;
+TE_TM0_13 = abs(S13.S(:,2))^2;
+
+load('TM_HR.fsp');
+S12 = getresult("FDTD::ports::port 2","S");
+S13 = getresult("FDTD::ports::port 3","S");
+
+TM_TE0_12 = abs(S12.S(:,1))^2;
+TM_TM0_12 = abs(S12.S(:,2))^2;
+TM_TE0_13 = abs(S13.S(:,1))^2;
+TM_TM0_13 = abs(S13.S(:,2))^2;
+
+
+lambda = S12.lambda;
+
+
+# Splitting ratio
+ER_TE = TE_TE0_12/TE_TE0_13;
+ER_TM = TM_TM0_13/TM_TM0_12;
+
+title = 'Polarization Extinction Ratio';
+plot(lambda*1e9,10*log10(ER_TE),'wavelength (nm)','PER (dB)',title); holdon;
+plot(lambda*1e9,10*log10(ER_TM));
+legend("TE","TM");
+ holdoff;
+ 
+# Loss
+title = 'Insertion Loss';
+loss_TE = ( TE_TE0_12 + TE_TM0_12 + TE_TE0_13 + TE_TM0_13);
+loss_TM = ( TM_TE0_12 + TM_TM0_12 + TM_TE0_13 + TM_TM0_13);
+
+plot(lambda,-10*log10(loss_TE),'wavelength (nm)','Ratio (dB)',title); holdon;
+plot(lambda,-10*log10(loss_TM)); holdoff;
+legend("TE","TM");
+
+#CrossTalk
+
+#TE output
+title = 'TE Output Transmission (S12) ';
+XTE_TEtoTE = TE_TE0_12;
+XTE_TMtoTE = TM_TE0_12;
+XTE_TEtoTM = TE_TM0_12;
+XTE_TMtoTM = TM_TM0_12;
+plot(lambda,10*log10(XTE_TEtoTE),'wavelength (nm)','Power (dB)',title); holdon;
+plot(lambda,10*log10(XTE_TMtoTE)); 
+plot(lambda,10*log10(XTE_TEtoTM)); 
+plot(lambda,10*log10(XTE_TMtoTM)); holdoff;
+legend("TE to TE","TM to TE", "TE to TM", "TM to TM");
+
+#TM output
+title = 'TM Output Transmission (S13) ';
+XTM_TEtoTE = TE_TE0_13;
+XTM_TMtoTE = TM_TE0_13;
+XTM_TEtoTM = TE_TM0_13;
+XTM_TMtoTM = TM_TM0_13;
+
+plot(lambda,10*log10(XTM_TEtoTE),'wavelength (nm)','Power (dB)',title); holdon;
+plot(lambda,10*log10(XTM_TMtoTE)); 
+plot(lambda,10*log10(XTM_TEtoTM)); 
+plot(lambda,10*log10(XTM_TMtoTM)); holdoff;
+legend("TE to TE","TM to TE", "TE to TM", "TM to TM");
+
+

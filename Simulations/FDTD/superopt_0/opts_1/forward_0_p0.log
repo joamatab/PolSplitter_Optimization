@@ -1,0 +1,16 @@
+Error: Unable to obtain a node locked or floating license. Either activate a node locked license or enter the address for your floating license server. Please see the <a href=https://kb.lumerical.com/redirect/fwd3.html>Troubleshooting guide</a> for help resolving this issue.<p><b>Node Locked error: -15</b> Cannot connect to license server system.
+ The license server manager (lmgrd) has not been started yet,
+ the wrong port@host or license file is being used, or the
+ port or hostname in the license file has been changed.
+Feature:       FDTD_Solutions_engine
+Server name:   10.230.10.33
+License path:  27011@10.230.10.33;
+FlexNet Licensing error:-15,10032</p><p><b>Floating error: -15</b> Cannot connect to license server system.
+ The license server manager (lmgrd) has not been started yet,
+ the wrong port@host or license file is being used, or the
+ port or hostname in the license file has been changed.
+Feature:       FDTD_Solutions_engine
+Server name:   10.230.10.33
+License path:  27011@10.230.10.33;
+FlexNet Licensing error:-15,10032. </p>
+Would you like to reconfigure your license settings?, Response: No

@@ -1,0 +1,18 @@
+#Get expansion monitors
+
+S12 = getresult("FDTD::ports::port 2","S");
+S13 = getresult("FDTD::ports::port 3","S");
+
+TE0_12 = abs(S12.S(:,1))^2;
+TM0_12 = abs(S12.S(:,2))^2;
+TE0_13 = abs(S13.S(:,1))^2;
+TM0_13 = abs(S13.S(:,2))^2;
+
+lambda = S12.lambda;
+loss = TE0_12 + TM0_12 + TE0_13 + TM0_13;
+
+ER_TE = TE0_13/TE0_12;
+ER_TM = TM0_12/TM0_13;
+
+plot(lambda,10*log10(1/ER_TM));
+#plot(lambda,10*log10(ER_TE));

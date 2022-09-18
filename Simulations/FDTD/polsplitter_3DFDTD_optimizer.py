@@ -9,6 +9,7 @@ from lumopt.geometries.polygon import FunctionDefinedPolygon
 from lumopt.utilities.materials import Material
 from lumopt.figures_of_merit.modematch import ModeMatch
 from lumopt.optimizers.generic_optimizers import ScipyOptimizers
+from lumopt.optimizers.fixed_step_gradient_descent import FixedStepGradientDescent
 from lumopt.optimization import Optimization
 from lumapi import LumApiError
 # Load Base simulation functions
@@ -28,19 +29,19 @@ PolSplitter_TM = y_branch_init_inTM
 
 # Save the project directory for the final figure export
 project_directory = os.getcwd()
-wavelengths = Wavelengths(start=1500e-9, stop=1600e-9, points=21)
+wavelengths = Wavelengths(start=1530.0e-9, stop=1570.0e-9, points=11)
 num_points = 11
+print("Wavelengths: %s"%wavelengths)
 
 dev_params = {'wg01': 0.5e-6,
               'wg02': 0.5e-6,
               'spacing': 0.35e-6,
-              'length': 5.0e-6,
+              'length': 6.0e-6,
               'in_offset': 0.0e-6,
               'polarization': ""}
 
 wg01_offset_y = dev_params['in_offset']
 wg02_offset_y = (dev_params['spacing'] + dev_params['wg02']) / 2
-
 
 def plot_spliter(params):
     n_interpolation_points = 100
@@ -56,8 +57,10 @@ def splitter(params):
     # Both top and bottom y coordinates are provided as inputs, where the second half of the inout data is used for the
     # bottom boundary of the polygon. The coordinates for the bottom boundary need to be flipped vertically.
     # This is necessary to make sure that bounds are positive
-    np.savetxt('./last_param.txt', params)
-
+    with open('./last_param.txt', "ab") as f:
+        f.write(b"\n------------------------------------\n")
+        np.savetxt(f, params)
+    #print('\n params: ------- \n ', params)
     n_interpolation_points = 100
     #wg01_offset_y = dev_params['in_offset']
     #wg02_offset_y = (dev_params['spacing'] + dev_params['wg02']) / 2
@@ -91,7 +94,6 @@ def splitter(params):
 
     return polygon_points
 
-
 # Define the span and number of points
 initial_points_x = np.linspace(-dev_params['length']/2, dev_params['length']/2, num_points)
 initial_points_y1 = np.linspace(wg01_offset_y+dev_params['wg01']/2, (wg02_offset_y + dev_params['wg02']/2), initial_points_x.size) - wg01_offset_y
@@ -102,16 +104,12 @@ print("Initial points: ", initial_points_y)
 # L-BFGS methods allows the parameters to be bound. These should enforce the optimization footprint defined in the setup
 x = np.linspace(start=0, stop=1, num=initial_points_x.size)
 
-# Top boundaries
-finer_mesh_size_y = 5e-6
-
+# Top bondaries
 bstr = dev_params['wg01']/2
-bend = bstr + 2e-6 # dev_params['wg02']/2+wg02_offset_y
-
+bend = bstr + 2e-6  # dev_params['wg02']/2+wg02_offset_y
 slope = 10.0*(bend-bstr)/1.0  # To create a smooth transition in the input
-
 bound_min_top = np.array([0.05e-6]*x.size)
-bound_max_top = np.minimum(x*slope+bstr, [bend+1.5e-6]*x.size)
+bound_max_top = np.minimum(x*slope+bstr, [bend+0.5e-6]*x.size)
 # pp.plot(x, bound_max_top, x, bound_min_top)
 print('Bounds at bottom max: ', -bound_max_top)
 print('Bounds at bottom min: ', -bound_min_top)
@@ -121,7 +119,7 @@ bstr = dev_params['wg01']/2
 bend = bstr + 2e-6
 slope = 10.0*(bend-bstr)/1.0
 bound_min_bot = np.array([0.05e-6]*x.size)
-bound_max_bot = np.minimum(x*slope+bstr, [bend+1.5e-6]*x.size)
+bound_max_bot = np.minimum(x*slope+bstr, [bend+0.5e-6]*x.size)
 print('Bounds at bottom max: ', -bound_min_bot)
 print('Bounds at bottom min: ', -bound_max_bot)
 
@@ -132,8 +130,8 @@ print('Bounds at bottom min: ', -bound_max_bot)
 bound_max = np.concatenate((bound_max_top, bound_max_bot))
 bound_min = np.concatenate((bound_min_top, bound_min_bot))
 bounds = list(zip(bound_min, bound_max))
-
-# bounds = [(0.5e-6, 1.8e-6)] * initial_points_y.size
+bounds = [(5.0e-6, 6.0e-6)]
+bounds = bounds.append([(0.2e-6, 1.2e-6)] * initial_points_y.size)
 
 # Load from 2D results if available
 try:
@@ -167,13 +165,45 @@ fom1 = ModeMatch(monitor_name='fom',
                  target_T_fwd=lambda wl: np.ones(wl.size),
                  norm_p=1)
 
+fom2 = ModeMatch(monitor_name='fom',
+                 mode_number='fundamental mode',    # TM mode in for vertical asymmetric condition
+                 direction='Forward',
+                 target_T_fwd=lambda wl: np.ones(wl.size),
+                 norm_p=1)
+
+scaling_factor = 1.0e6
+
 optimizer_1 = ScipyOptimizers(max_iter=30,
                               method='L-BFGS-B',
-                              # scaling_factor = scaling_factor,
-                              pgtol=1.0e-5,
-                              ftol=1.0e-5,
-                              # target_fom = 0.0,
-                              scale_initial_gradient_to=0.0)
+                              scaling_factor=scaling_factor,
+                              pgtol=1.0e-6,
+                              ftol=1.0e-3
+                              # target_fom = 1.0,
+                              # scale_initial_gradient_to=0.0
+                              )
+
+optimizer_2 = ScipyOptimizers(max_iter=30,
+                              method='L-BFGS-B', # L-BFGS-B',
+                              scaling_factor=scaling_factor,
+                              pgtol=1.0e-6,
+                              ftol=1.0e-3
+                              # target_fom = 1.0,
+                              # scale_initial_gradient_to=0.0
+                              )
+
+# optimizer_1 = FixedStepGradientDescent(max_dx=1e-7,
+#                                        max_iter=30,
+#                                        all_params_equal=False,
+#                                        noise_magnitude=0.0,
+#                                        scaling_factor = scaling_factor
+#                                        )
+#
+# optimizer_2 = FixedStepGradientDescent(max_dx=1e-7,
+#                                        max_iter=30,
+#                                        all_params_equal=False,
+#                                        noise_magnitude=0.0,
+#                                        scaling_factor = scaling_factor
+#                                        )
 
 opt1 = Optimization(base_script=PolSplitter_TE,
                     wavelengths=wavelengths,
@@ -186,21 +216,6 @@ opt1 = Optimization(base_script=PolSplitter_TE,
                     plot_history=True,
                     store_all_simulations=False)
 
-
-fom2 = ModeMatch(monitor_name='fom',
-                 mode_number='fundamental mode',    # TM mode in for vertical asymmetric condition
-                 direction='Forward',
-                 target_T_fwd=lambda wl: np.ones(wl.size),
-                 norm_p=1)
-
-optimizer_2 = ScipyOptimizers(max_iter=30,
-                              method='L-BFGS-B',
-                              # scaling_factor = scaling_factor,
-                              pgtol=1.0e-5,
-                              ftol=1.0e-5,
-                              # target_fom = 0.0,
-                              scale_initial_gradient_to=0.0)
-
 opt2 = Optimization(base_script=PolSplitter_TM,
                     wavelengths=wavelengths,
                     fom=fom2,
@@ -209,21 +224,18 @@ opt2 = Optimization(base_script=PolSplitter_TM,
                     use_var_fdtd=False,
                     hide_fdtd_cad=False,
                     use_deps=True,
-                    plot_history=True,
+                    plot_history=False,
                     store_all_simulations=False)
-
-opt = opt1 + opt2
+results = None
+opt = opt2 + opt1
 results = opt.run()
 print(results)
-
-# #Save parameters to file
 np.savetxt('../2D_parameters.txt', results[1])
 
 # #Export generated structure
 gds_export_script = str("")
-
-
-
+if not results == None:
+    prev_results = results
 with lumapi.FDTD(hide=False) as sim:
     try:
         print('Mode is FDTD = ', isinstance(sim, lumapi.FDTD))
@@ -235,9 +247,8 @@ with lumapi.FDTD(hide=False) as sim:
         sim.set('z', 0.0)
         sim.set('z span', depth)
         sim.set('material', 'Si (Silicon) - Palik')
-
         # Run Export Script
-
+        # TO DO
         input('Press Enter to escape...')
     except LumApiError as err:
         print(C.YELLOW +f"LumAPI Exception {err=}, {type(err)=}" + C.ENDC)
@@ -247,8 +258,3 @@ with lumapi.FDTD(hide=False) as sim:
         print(C.YELLOW +f"Unexpected {err=}, {type(err)=}"+ C.ENDC)
         sim.close()
         raise
-
-
-
-#
-#     # sim.eval(gds_export_script)

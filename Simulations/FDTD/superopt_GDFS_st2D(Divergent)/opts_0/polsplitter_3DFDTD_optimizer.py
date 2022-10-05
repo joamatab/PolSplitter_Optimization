@@ -31,7 +31,7 @@ PolSplitter_TM = y_branch_init_inTM
 project_directory = os.getcwd()
 wavelengths = Wavelengths(start=1530.0e-9, stop=1570.0e-9, points=11)
 num_points = 11
-print("Wavelengths: %s"%wavelengths)
+print(f"Wavelengths: {wavelengths}")
 
 dev_params = {'wg01': 0.5e-6,
               'wg02': 0.5e-6,
@@ -46,7 +46,7 @@ wg02_offset_y = (dev_params['spacing'] + dev_params['wg02']) / 2
 def plot_spliter(params):
     n_interpolation_points = 100
 
-    pp.plot(initial_points_x, wg01_offset_y+params[0:int(params.size / 2)])
+    pp.plot(initial_points_x, wg01_offset_y + params[:int(params.size / 2)])
     pp.plot(initial_points_x, wg01_offset_y-params[int(params.size / 2)::])
     polygon_points = splitter(params)
 
@@ -72,7 +72,10 @@ def splitter(params):
     # Top edge
     y1 = wg01_offset_y + dev_params['wg01'] / 2
     y2 = wg02_offset_y + dev_params['wg02'] / 2
-    points_y1 = np.concatenate(([y1], wg01_offset_y+params[0:int(params.size / 2)], [y2]))
+    points_y1 = np.concatenate(
+        ([y1], wg01_offset_y + params[: int(params.size / 2)], [y2])
+    )
+
     interpolator = sp.interpolate.interp1d(points_x1, points_y1, kind='cubic')
     polygon_points_y1 = interpolator(polygon_points_x1)
 
@@ -88,11 +91,9 @@ def splitter(params):
     polygon_points_y2 = interpolator(polygon_points_x2)
 
     # Zip coordinates into a list of tuples, reflect and reorder. Need to be passed ordered in a CCW sense
-    polygon_points_up = [(x, y) for x, y in zip(polygon_points_x1, polygon_points_y1)]
-    polygon_points_down = [(x, y) for x, y in zip(polygon_points_x2, polygon_points_y2)]
-    polygon_points = np.array(polygon_points_up[::-1] + polygon_points_down)
-
-    return polygon_points
+    polygon_points_up = list(zip(polygon_points_x1, polygon_points_y1))
+    polygon_points_down = list(zip(polygon_points_x2, polygon_points_y2))
+    return np.array(polygon_points_up[::-1] + polygon_points_down)
 
 # Define the span and number of points
 initial_points_x = np.linspace(-dev_params['length']/2, dev_params['length']/2, num_points)
@@ -238,7 +239,7 @@ print(results)
 np.savetxt('../2D_parameters.txt', results[1])
 
 # #Export generated structure
-gds_export_script = str("")
+gds_export_script = ""
 
 with lumapi.FDTD(hide=False) as sim:
     try:
@@ -255,10 +256,10 @@ with lumapi.FDTD(hide=False) as sim:
         # TO DO
         input('Press Enter to escape...')
     except LumApiError as err:
-        print(C.YELLOW +f"LumAPI Exception {err=}, {type(err)=}" + C.ENDC)
+        print(f"{C.YELLOW}LumAPI Exception {err:=}, {type(err):=}{C.ENDC}")
         sim.close()
         raise
     except BaseException as err:
-        print(C.YELLOW +f"Unexpected {err=}, {type(err)=}"+ C.ENDC)
+        print(f"{C.YELLOW}Unexpected {err:=}, {type(err):=}{C.ENDC}")
         sim.close()
         raise

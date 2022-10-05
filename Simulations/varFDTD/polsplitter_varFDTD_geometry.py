@@ -103,9 +103,9 @@ def y_branch_init_(mode):
     mode.switchtolayout()
     mode.selectall()
     mode.delete()
-    
+
     # Input Waveguides
-    
+
     mode.addrect()
     mode.set('name', 'input wg')
     mode.set('x span', 3e-6)
@@ -115,9 +115,9 @@ def y_branch_init_(mode):
     mode.set('x', -(1.5e-6+dev_params['length']/2) - 0.05e-6)
     mode.set('z', 0)
     mode.set('material', 'Si (Silicon) - Palik')
-    
+
     # Output Waveguides
-    
+
     mode.addrect()
     mode.set('name', 'output wg top')
     mode.set('x span', 3e-6)
@@ -127,7 +127,7 @@ def y_branch_init_(mode):
     mode.set('x', 1.5e-6+dev_params['length']/2 + 0.05e-6)
     mode.set('z', 0)
     mode.set('material', 'Si (Silicon) - Palik')
-    
+
     mode.addrect()
     mode.set('name', 'output wg bottom')
     mode.set('x span', 3e-6)
@@ -151,7 +151,7 @@ def y_branch_init_(mode):
     mode.set('override mesh order from material database', 1)
     mode.set('mesh order', 3)
     mode.set('alpha', 0.3)
-    
+
     # varFDTD
     mode.addvarfdtd()
     mode.set('mesh accuracy', mesh_accuracy)
@@ -163,18 +163,18 @@ def y_branch_init_(mode):
     # mode.set('y min bc','Anti-Symmetric'); #Can be set to symmetric to force the TE1
     mode.set('y min bc', 'PML')
     mode.set('z', 0)
-    
+
     mode.set('effective index method', 'variational')
     mode.set('can optimize mesh algorithm for extruded structures', 1)
     mode.set('clamp values to physical material properties', 1)
-    
+
     x_t = 0.3e-6+dev_params['length']/2
     y_t = dev_params['in_offset']
     mode.set('x0', -x_t)
     mode.set('y0', y_t)
     mode.set('number of test points', 4)
     mode.set('test points', np.array([[0, 0],[x_t, 0.4e-6], [x_t, -0.4e-6], [x_t, 0]]))
-    
+
     # MESH IN OPTIMIZABLE REGION
     mode.addmesh()
     mode.set('x', 0)
@@ -183,9 +183,9 @@ def y_branch_init_(mode):
     mode.set('y span',finer_mesh_size_y)
     mode.set('dx', mesh_x)
     mode.set('dy', mesh_y)
-    
+
     # OPTIMIZATION FIELDS MONITOR IN OPTIMIZABLE REGION
-    
+
     mode.addpower()
     mode.set('name','opt_fields')
     mode.set('monitor type','2D Z-normal')

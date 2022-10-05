@@ -37,7 +37,7 @@ wg02_offset_y = (dev_params['spacing'] + dev_params['wg02']) / 2
 def plot_spliter(params):
     n_interpolation_points = 100
 
-    pp.plot(initial_points_x, wg01_offset_y+params[0:int(params.size / 2)])
+    pp.plot(initial_points_x, wg01_offset_y + params[:int(params.size / 2)])
     pp.plot(initial_points_x, wg01_offset_y-params[int(params.size / 2)::])
     polygon_points = splitter(params)
 
@@ -61,7 +61,10 @@ def splitter(params):
     # Top edge
     y1 = wg01_offset_y + dev_params['wg01'] / 2
     y2 = wg02_offset_y + dev_params['wg02'] / 2
-    points_y1 = np.concatenate(([y1], wg01_offset_y+params[0:int(params.size / 2)], [y2]))
+    points_y1 = np.concatenate(
+        ([y1], wg01_offset_y + params[: int(params.size / 2)], [y2])
+    )
+
     interpolator = sp.interpolate.interp1d(points_x1, points_y1, kind='cubic')
     polygon_points_y1 = interpolator(polygon_points_x1)
 
@@ -77,11 +80,9 @@ def splitter(params):
     polygon_points_y2 = interpolator(polygon_points_x2)
 
     # Zip coordinates into a list of tuples, reflect and reorder. Need to be passed ordered in a CCW sense
-    polygon_points_up = [(x, y) for x, y in zip(polygon_points_x1, polygon_points_y1)]
-    polygon_points_down = [(x, y) for x, y in zip(polygon_points_x2, polygon_points_y2)]
-    polygon_points = np.array(polygon_points_up[::-1] + polygon_points_down)
-
-    return polygon_points
+    polygon_points_up = list(zip(polygon_points_x1, polygon_points_y1))
+    polygon_points_down = list(zip(polygon_points_x2, polygon_points_y2))
+    return np.array(polygon_points_up[::-1] + polygon_points_down)
 
 
 # Define the span and number of points

@@ -80,7 +80,7 @@ def y_branch_init_(sim):
     sim.switchtolayout()
     sim.selectall()
     sim.delete()
-    
+
     # Input Waveguides
     wg_len = 4.0e-06
     sim.addrect()
@@ -92,9 +92,9 @@ def y_branch_init_(sim):
     sim.set('x', -(wg_len/2 + dev_params['length'] / 2) )
     sim.set('z', 0)
     sim.set('material', 'Si (Silicon) - Palik')
-    
+
     # Output Waveguides
-    
+
     sim.addrect()
     sim.set('name', 'output wg top')
     sim.set('x span', wg_len)
@@ -104,7 +104,7 @@ def y_branch_init_(sim):
     sim.set('x', wg_len/2 + dev_params['length'] / 2)
     sim.set('z', 0)
     sim.set('material', 'Si (Silicon) - Palik')
-    
+
     sim.addrect()
     sim.set('name', 'output wg bottom')
     sim.set('x span', wg_len)
@@ -128,7 +128,7 @@ def y_branch_init_(sim):
     sim.set('override mesh order from material database', 1)
     sim.set('mesh order', 3)
     sim.set('alpha', 0.3)
-    
+
     # 3D FDTD solver
     sim.addfdtd()
     sim.set('mesh accuracy', mesh_accuracy)
@@ -153,9 +153,9 @@ def y_branch_init_(sim):
     sim.set('dx', mesh_x)
     sim.set('dy', mesh_y)
     sim.set('dz', mesh_z)
-    
+
     # OPTIMIZATION FIELDS MONITOR IN OPTIMIZABLE REGION
-    
+
     sim.addpower()
     sim.set('name', 'opt_fields')
     sim.set('monitor type', '3D')
